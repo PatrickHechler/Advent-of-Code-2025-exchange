@@ -257,8 +257,8 @@ public class Y23Day02Visualization {
 //		mainPart1("exercises/day02/Feri/input.txt", 12, 13, 14);
 		System.out.println("---------------");
 		System.out.println("--- PART II ---");
-		mainPart2("exercises/day02/Feri/input-example.txt");
-//		mainPart2("exercises/day02/Feri/input.txt");     
+//		mainPart2("exercises/day02/Feri/input-example.txt");
+		mainPart2("exercises/day02/Feri/input.txt");     
 		System.out.println("---------------");    // 
 	}
 	

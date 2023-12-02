@@ -27,11 +27,25 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 
+
 class Y23GUIOutput01 {
 
 	@SuppressWarnings("serial")
 	public static class MyCaret extends BasicCaret {
 		@Override public void install(JTextComponent c) { return; }
+	}
+
+	@SuppressWarnings("serial")
+	public static class JTextPaneNowrap extends JTextPane {
+		int maxWidth = 0;
+		public JTextPaneNowrap() { super(); }
+		@Override public boolean getScrollableTracksViewportWidth() { return false; }
+		@Override public void setSize(Dimension d) {
+			maxWidth = Math.max(maxWidth, getPreferredSize().width);
+			d.width = Math.max(d.width, maxWidth);
+			d.width = Math.max(d.width, SwingUtilities.getUnwrappedParent(this).getSize().width);
+			super.setSize(d);
+		}
 	}
 	
 	private List<String> textListe;
@@ -124,7 +138,7 @@ class Y23GUIOutput01 {
         });
         p.add(slider);
         
-        jt = new JTextPaneNowrap(false);
+        jt = new JTextPaneNowrap();
         jt.setCaret(new MyCaret());
         jt.setEditable(false);
 //        jt.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
@@ -301,5 +315,7 @@ class Y23GUIOutput01 {
 	public String plainText(String coloredText) {
 		return coloredText.replaceAll("°c[a-z0-9]+;", "");
 	}
+
+	
 	
 }
