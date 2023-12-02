@@ -40,7 +40,7 @@ class Y23GUIOutput01 {
     boolean buffered;
 
     JFrame f;
-    JTextPane jt;
+    JTextPaneNowrap jt;
     JScrollPane sp;
     JLabel lbTextID;
     JSlider slider;
@@ -124,8 +124,8 @@ class Y23GUIOutput01 {
         });
         p.add(slider);
         
-        jt = new JTextPane();
-//        jt.setCaret(new MyCaret());
+        jt = new JTextPaneNowrap(false);
+        jt.setCaret(new MyCaret());
         jt.setEditable(false);
 //        jt.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         jt.setFont(new Font("Consolas", Font.PLAIN, 16));
@@ -152,41 +152,32 @@ class Y23GUIOutput01 {
     }
 
     private Map<String, AttributeSet> styles = new HashMap<>();
-    
-    private void addColorStyle(String name, Color c) {
+    private AttributeSet col(String name) { return styles.get(name); }
+    private void addColorStyle(Color c, String... names) {
         StyleContext sc = StyleContext.getDefaultStyleContext();
         AttributeSet aset = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.Foreground, c);
-        styles.put(name, aset);
+        for (String name:names) {
+        	styles.put(name, aset);
+        }
     }
     
     private void initColorStlye() {
-    	addColorStyle("cwhite", Color.WHITE);
-    	addColorStyle("clgray", Color.LIGHT_GRAY);
-    	addColorStyle("cgray", Color.GRAY);
-    	addColorStyle("cdgray", Color.DARK_GRAY);
-    	addColorStyle("cblack", Color.BLACK);
-    	addColorStyle("cred", Color.RED);
-    	addColorStyle("cpink", Color.PINK);
-    	addColorStyle("corange", Color.ORANGE);
-    	addColorStyle("cyellow", Color.YELLOW);
-    	addColorStyle("cgreen", Color.GREEN);
-    	addColorStyle("cmagenta", Color.MAGENTA);
-    	addColorStyle("ccyan", Color.CYAN);
-    	addColorStyle("cblue", Color.BLUE);
+    	addColorStyle(Color.BLACK,      "cblack",   "cbk", "c0" );
+    	addColorStyle(Color.RED,        "cred",     "cre", "c1" );
+    	addColorStyle(Color.GREEN,      "cgreen",   "cgr", "c2" );
+    	addColorStyle(Color.BLUE,       "cblue",    "cbl", "c3" );
+    	addColorStyle(Color.CYAN,       "ccyan",    "ccy", "c4" );
+    	addColorStyle(Color.MAGENTA,    "cmagenta", "cma", "c5" );
+    	addColorStyle(Color.YELLOW,     "cyellow",  "cye", "c6" );
+    	addColorStyle(Color.ORANGE,     "corange",  "cor", "c7" );
+    	addColorStyle(Color.PINK,       "cpink",    "cpi", "c8" );
+    	addColorStyle(Color.DARK_GRAY,  "cdgray",   "cdg", "c9" );
+    	addColorStyle(Color.GRAY,       "cgray",    "cgy", "c10");
+    	addColorStyle(Color.LIGHT_GRAY, "clgray",   "clg", "c11");
+    	addColorStyle(Color.WHITE,      "cwhite",   "cwh", "c12");
     }
     
-    private void getStyle(String styleName) {
-    	
-    }
-    
-    private void appendToPane(JTextPane tp, String msg, Color c)
-    {
-        StyleContext sc = StyleContext.getDefaultStyleContext();
-        AttributeSet aset = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.Foreground, c);
-
-        aset = sc.addAttribute(aset, StyleConstants.FontFamily, "Lucida Console");
-        aset = sc.addAttribute(aset, StyleConstants.Alignment, StyleConstants.ALIGN_JUSTIFIED);
-
+    private void appendToPane(JTextPane tp, String msg, AttributeSet aset) {
         StyledDocument sDoc = tp.getStyledDocument();
         try {
 			sDoc.insertString(sDoc.getLength(), msg, aset);
@@ -211,13 +202,27 @@ class Y23GUIOutput01 {
     
     private void addColoredText(String text) {
     	jt.setText("");
-    	if (!text.startsWith("°")) {
-    		text = "°cblack;"+text;
+    	if (text.startsWith("°")) {
+    		text = text.substring(1);
+    	}
+    	else {
+    		text = "c0;"+text;
     	}
     	String[] coloredBlocks = text.split("°");
     	for (String coloredBlock:coloredBlocks) {
-    		
-        	appendToPane(jt, text, );
+    		int pos = coloredBlock.indexOf(";");
+    		if (pos == -1) {
+    			System.err.println("[INVALID COLOR]: "+coloredBlock);
+    			appendToPane(jt, "[INVALID COLOR]: "+coloredBlock, col("c0"));
+    			return;
+    		}
+    		AttributeSet aset = col(coloredBlock.substring(0, pos));
+    		if (aset == null) {
+    			System.err.println("[INVALID COLOR]: "+coloredBlock);
+    			appendToPane(jt, "[INVALID COLOR]: "+coloredBlock, col("c0"));
+    			return;
+    		}
+        	appendToPane(jt, coloredBlock.substring(pos+1), aset);
     	}
 	}
 
@@ -282,7 +287,19 @@ class Y23GUIOutput01 {
     
 	public static void main(String[] args) {
 		Y23GUIOutput01 output = new Y23GUIOutput01("title", true);
-		output.addStep("Text1\nText2");
+		output.addStep("°cbk;Text1 in °cre;red°cbk; and °cbl;blue°cbk;.");
+	}
+
+	public String color(String colname) {
+		return "°c"+colname+";";
+	}
+
+	public String style(String colname) {
+		return "°"+colname+";";
+	}
+
+	public String plainText(String coloredText) {
+		return coloredText.replaceAll("°c[a-z0-9]+;", "");
 	}
 	
 }

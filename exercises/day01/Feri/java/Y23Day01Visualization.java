@@ -30,8 +30,6 @@ public class Y23Day01Visualization {
 		public String toString() {
 			return line;
 		}
-		
-		
 	}
 	
 	public static class InputProcessor implements Iterable<InputData>, Iterator<InputData> {
@@ -82,7 +80,9 @@ public class Y23Day01Visualization {
 	
 	
 	
-	static record NumberWordInfo(String word, int value, int index) {};
+	static record NumberWordInfo(String word, int value, int index) {
+		public int endIndex() { return index + word.length(); }
+	};
 			
 	public static NumberWordInfo checkNumberWord(String line, int index) {
 		for (String numberWord:NUMBER_WORD_MAPPING.keySet()) {
@@ -143,22 +143,44 @@ public class Y23Day01Visualization {
 			String line = lines.get(i);
 			System.out.println(line);
 			NumberWordInfo firstNumber = findFirstNumberWord(line);
-			String result = replicate(".", firstNumber.index) + firstNumber.word; 
 			NumberWordInfo lastNumber = findLastNumberWord(line);
-			if (firstNumber.index != lastNumber.index) {
-				result = result + replicate(".", lastNumber.index-result.length()) + lastNumber.word;
+			int start1 = firstNumber.index;
+			int end1 = firstNumber.endIndex();
+			int start2 = lastNumber.index;
+			int end2 = lastNumber.endIndex();
+			String result;
+			if (start2 <= end1) {
+				result = colorText(line, new ColorPos(0, "cgray"), new ColorPos(start1, "cred"), new ColorPos(end2, "cgray"));
 			}
-			result = result + replicate(".", line.length()-result.length());
-			sumCalibration = sumCalibration + 10*firstNumber.value+lastNumber.value;
-			result = result + replicate(" ", maxLineLength+3-result.length());
-			result = result + firstNumber.value+lastNumber.value+"  "+sumCalibration;
+			else {
+				result = colorText(line, new ColorPos(0, "cgray"), new ColorPos(start1, "cred"), new ColorPos(end1, "cgray"), new ColorPos(start2, "cred"), new ColorPos(end2, "cgray"));
+			}
+			result = result + replicate(" ", maxLineLength-line.length()+2) + output.style("cgreen");
+			sumCalibration = sumCalibration + 10*firstNumber.value + lastNumber.value;
+			result = result + firstNumber.value + lastNumber.value +"  " + sumCalibration + output.style("c0");
+			
 			lines.set(i, result);
-			System.out.println(result);
+			System.out.println(output.plainText(result));
 			output.addStep(show(lines));
 		}
 		System.out.println("SUM CALIBRATION: "+sumCalibration);
 	}
 
+	static record ColorPos(int pos, String colorName) {}
+	
+	private static String colorText(String line, ColorPos... colorPosList) {
+		StringBuilder result = new StringBuilder();
+		int lastPos = 0;
+		for (ColorPos cp:colorPosList) {
+			if (cp.pos<lastPos) {
+				continue;
+			}
+			result.append(line.substring(lastPos, cp.pos)).append(output.style(cp.colorName));
+			lastPos = cp.pos;
+		}
+		result.append(line.substring(lastPos));
+		return result.toString();
+	}
 	public static void mainPart1b(String inputFile) {
 		initNumericNumberWords();
 		output = new Y23GUIOutput01("Y23 Day 01 Part I", true);
@@ -178,8 +200,8 @@ public class Y23Day01Visualization {
 //		mainPart1b("exercises/day01/Feri/input.txt");
 		System.out.println("---------------");
 		System.out.println("--- PART IIb ---");
-		mainPart2b("exercises/day01/Feri/input-example-2.txt");     
-//		mainPart2b("exercises/day01/Feri/input.txt");     
+//		mainPart2b("exercises/day01/Feri/input-example-2.txt");     
+		mainPart2b("exercises/day01/Feri/input.txt");     
 		System.out.println("---------------");    // 
 	}
 	
