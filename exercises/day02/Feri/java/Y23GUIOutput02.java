@@ -28,7 +28,7 @@ import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 
 
-class Y23GUIOutput01 {
+class Y23GUIOutput02 {
 
 	@SuppressWarnings("serial") public static class MyCaret extends BasicCaret {
 		@Override public void install(JTextComponent c) { return; }
@@ -53,7 +53,7 @@ class Y23GUIOutput01 {
     
     Timer timer;
     
-    public Y23GUIOutput01(String title, boolean buffered) {
+    public Y23GUIOutput02(String title, boolean buffered) {
     	this.textListe = new ArrayList<>();
     	this.currentText = -1;
     	this.buffered = buffered;
@@ -166,21 +166,34 @@ class Y23GUIOutput01 {
         	styles.put(name, aset);
         }
     }
+    private void addBackgroundStyle(Color cBackground, Color cForeground, String... names) {
+        StyleContext sc = StyleContext.getDefaultStyleContext();
+        AttributeSet aset = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.Foreground, cForeground);
+        aset = sc.addAttribute(aset, StyleConstants.Background, cBackground);
+        for (String name:names) {
+        	styles.put(name, aset);
+        }
+    }
     
     private void initColorStlye() {
-    	addColorStyle(Color.BLACK,      "cblack",   "cbk", "c0" );
-    	addColorStyle(Color.RED,        "cred",     "cre", "c1" );
-    	addColorStyle(Color.GREEN,      "cgreen",   "cgr", "c2" );
-    	addColorStyle(Color.BLUE,       "cblue",    "cbl", "c3" );
-    	addColorStyle(Color.CYAN,       "ccyan",    "ccy", "c4" );
-    	addColorStyle(Color.MAGENTA,    "cmagenta", "cma", "c5" );
-    	addColorStyle(Color.YELLOW,     "cyellow",  "cye", "c6" );
-    	addColorStyle(Color.ORANGE,     "corange",  "cor", "c7" );
-    	addColorStyle(Color.PINK,       "cpink",    "cpi", "c8" );
-    	addColorStyle(Color.DARK_GRAY,  "cdgray",   "cdg", "c9" );
-    	addColorStyle(Color.GRAY,       "cgray",    "cgy", "c10");
-    	addColorStyle(Color.LIGHT_GRAY, "clgray",   "clg", "c11");
-    	addColorStyle(Color.WHITE,      "cwhite",   "cwh", "c12");
+    	addColorStyle(Color.BLACK,      "cblack",     "cbk", "c0" );
+    	addColorStyle(Color.RED,        "cred",       "cre", "c1" );
+    	addColorStyle(Color.GREEN,      "cgreen",     "cgr", "c2" );
+    	addColorStyle(Color.BLUE,       "cblue",      "cbl", "c3" );
+    	addColorStyle(Color.CYAN,       "ccyan",      "ccy", "c4" );
+    	addColorStyle(Color.MAGENTA,    "cmagenta",   "cma", "c5" );
+    	addColorStyle(Color.YELLOW,     "cyellow",    "cye", "c6" );
+    	addColorStyle(Color.ORANGE,     "corange",    "cor", "c7" );
+    	addColorStyle(Color.PINK,       "cpink",      "cpi", "c8" );
+    	addColorStyle(Color.DARK_GRAY,  "cdarkgray",  "cdg", "c9" );
+    	addColorStyle(Color.GRAY,       "cgray",      "cgy", "c10");
+    	addColorStyle(Color.LIGHT_GRAY, "clightgray", "clg", "c11");
+    	addColorStyle(Color.WHITE,      "cwhite",     "cwh", "c12");
+    	
+    	addBackgroundStyle(Color.WHITE,  Color.BLACK,  "bwhite",  "bwh", "b0");
+    	addBackgroundStyle(Color.BLACK,  Color.WHITE,  "bblack",  "bbl", "b1");
+    	addBackgroundStyle(Color.YELLOW, Color.BLACK,  "byellow", "bye", "b2");
+    	addBackgroundStyle(Color.RED,    Color.WHITE,  "bred",    "bre", "b3");
     }
     
     private void appendToPane(JTextPane tp, String msg, AttributeSet aset) {
@@ -291,11 +304,6 @@ class Y23GUIOutput01 {
 		switchPage(page);
 	}
     
-	public static void main(String[] args) {
-		Y23GUIOutput01 output = new Y23GUIOutput01("title", true);
-		output.addStep("°cbk;Text1 in °cre;red°cbk; and °cbl;blue°cbk;.");
-	}
-
 	public String color(String colname) {
 		return "°c"+colname+";";
 	}
@@ -308,6 +316,17 @@ class Y23GUIOutput01 {
 		return coloredText.replaceAll("°c[a-z0-9]+;", "");
 	}
 
-	
+
+	public static void main(String[] args) throws Exception {
+		Y23GUIOutput02 output = new Y23GUIOutput02("title", true);
+		output.addStep("etwas°cblue; länger °byellow;eine°c0; lange °bblack;Zeile°c0;\netwas länger undeinekurze\netwas länger undeinekurze xx yy zz");
+		output.addStep("°cred;etwas°cblue; länger °byellow;eine°c0; lange °bblack;Zeile°c0;\netwas länger undeinekurze\netwas länger undeinekurze xx yy zz");
+//		Thread.sleep(1);
+//    	SwingUtilities.invokeLater(() -> 
+//    		output.jt.getPreferredSize()
+//    	);
+//		Thread.sleep(1);
+	}
+
 	
 }
