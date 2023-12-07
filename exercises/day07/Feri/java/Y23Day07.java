@@ -70,6 +70,16 @@ public class Y23Day07 {
 		for (char c:card.toCharArray()) {
 			counts.put(c, counts.getOrDefault(c, 0)+1);
 		}
+		if (counts.containsKey('*')) {
+			int numJokers = counts.remove('*');
+			if (numJokers == 5) {
+				return CARD_COUNT_ORDER.get(numJokers);
+			}
+			List<Integer> countValues = counts.values().stream().sorted().collect(Collectors.toList());
+			countValues.set(countValues.size()-1, countValues.get(countValues.size()-1)+numJokers);
+			int cardCounts = Integer.parseInt(countValues.stream().map(i->Integer.toString(i)).collect(Collectors.joining()));
+			return CARD_COUNT_ORDER.get(cardCounts);
+		}
 		int cardCounts = Integer.parseInt(counts.values().stream().sorted().map(i->Integer.toString(i)).collect(Collectors.joining()));
 		return CARD_COUNT_ORDER.get(cardCounts);
 	}
@@ -125,6 +135,27 @@ public class Y23Day07 {
 	
 	
 	public static void mainPart2(String inputFile) {
+		Map<String, Long> cardBets = new HashMap<>();
+		for (InputData data:new InputProcessor(inputFile)) {
+//			System.out.println(data);
+			Long exists = cardBets.put(data.cards.replace('J', '*'), data.bet);
+			if (exists != null) {
+				throw new RuntimeException("duplicate cards "+data);
+			}
+		}
+		List<String> cards = new ArrayList<>(cardBets.keySet());
+		cards.sort((c1,c2) -> cardCompare(c1, c2));
+		long result = 0;
+		System.out.println("-----");
+		for (int i=0; i<cards.size(); i++) {
+			String card = cards.get(i);
+			long bet = cardBets.get(card);
+			result = result + (i+1)*bet;
+//			System.out.println(card+" "+bet);
+			System.out.println(card+" "+(i+1)+"*"+bet + " = "+((i+1)*bet)+"   "+ result);
+		}
+		System.out.println("-----");
+		System.out.println(result);		
 	}
 
 	
@@ -138,7 +169,7 @@ public class Y23Day07 {
 		System.out.println("---------------");                           
 		System.out.println("--- PART II ---");
 //		mainPart2("exercises/day07/Feri/input-example.txt");
-//		mainPart2("exercises/day07/Feri/input.txt");     
+		mainPart2("exercises/day07/Feri/input.txt");                // > 247984518
 		System.out.println("---------------");    //
 	}
 	
