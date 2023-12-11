@@ -1,6 +1,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -127,6 +128,7 @@ public class Y23Day10 {
 			this.field = new ArrayList<>();
 			this.ticks = 0;
 			this.path = new LinkedHashSet<>();
+			this.fill = Collections.emptySet();
 		}
 		public char getRoad(Pos pos) {
 			return getRoad(pos.x, pos.y);
@@ -168,6 +170,7 @@ public class Y23Day10 {
 					break;
 				}
 			}
+			path.add(startPos);
 		}
 		
 		public boolean reachedStart() {
@@ -282,6 +285,7 @@ public class Y23Day10 {
 	}
 	
 	public static void mainPart1(String inputFile) {
+		output = new Y23GUIOutput10("2023 Day 10 Part I", true);
 		World world = new World();
 		for (InputData data:new InputProcessor(inputFile)) {
 			System.out.println(data);
@@ -290,8 +294,10 @@ public class Y23Day10 {
 		world.initStartDir();
 		world.tick();
 		while (!world.reachedStart()) {
+			world.show();
 			world.tick();
 		}
+		world.show();
 		System.out.println("ticks="+world.ticks);
 		System.out.println("MAX_DIST: "+world.ticks/2);
 	}
@@ -335,7 +341,7 @@ public class Y23Day10 {
 
 	public static void main(String[] args) throws FileNotFoundException {
 		System.out.println("--- PART I ---");
-//		mainPart1("exercises/day10/Feri/input-example.txt");
+		mainPart1("exercises/day10/Feri/input-example.txt");
 //		mainPart1("exercises/day10/Feri/input.txt");               
 		System.out.println("---------------");                           
 		System.out.println("--- PART II ---");
