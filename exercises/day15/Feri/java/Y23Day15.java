@@ -1,10 +1,8 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 /**
@@ -54,6 +52,13 @@ public class Y23Day15 {
 		public HashCalc() {
 			current = 0;
 		}
+		public static int calc(String word) {
+			HashCalc hashCalc = new HashCalc();
+			for (char c:word.toCharArray()) {
+				hashCalc.addAscii(c);
+			}
+			return hashCalc.getHash();
+		}
 		public void addAscii(char c) {
 			current = ((current + c)*17)%256;
 		}
@@ -62,17 +67,50 @@ public class Y23Day15 {
 		}
 	}
 
+	static class HASHMAP {
+		HashMap<String, Integer>[] boxes;
+		public HASHMAP() {
+			boxes = new HashMap[256];
+		}
+		public HashMap<String, Integer> getBox(int boxNr) {
+			if (boxes[boxNr] == null) {
+				boxes[boxNr] = new LinkedHashMap<>();
+			}
+			return boxes[boxNr];
+		}
+		public void remove(String key) {
+			int boxNr = HashCalc.calc(key);
+			getBox(boxNr).remove(key);
+		}
+		public void put(String key, int lens) {
+			int boxNr = HashCalc.calc(key);
+			getBox(boxNr).put(key, lens);
+		}
+		public int calcChecksum() {
+			int result = 0;
+			for (int i=0;i<256; i++) {
+				HashMap<String,Integer> box = boxes[i];
+				if (box == null) {
+					continue;
+				}
+				int slot = 0;
+				for (String key:box.keySet()) {
+					slot++;
+					result += (i+1)*slot*box.get(key);
+				}
+			}
+			return result;
+		}
+	}
+
 	public static void mainPart1(String inputFile) {
 		for (InputData data:new InputProcessor(inputFile)) {
 			System.out.println(data);
 			int sumHashes = 0;
 			for (String word:data.words) {
-				HashCalc hashCalc = new HashCalc();
-				for (char c:word.toCharArray()) {
-					hashCalc.addAscii(c);
-				}
-				System.out.println(word+" : "+hashCalc.getHash());
-				sumHashes += hashCalc.getHash();
+				int hashValue = HashCalc.calc(word);
+				System.out.println(word+" : "+hashValue);
+				sumHashes += hashValue;
 			}
 			System.out.println("SUM HASHES: "+sumHashes);
 		}
@@ -80,6 +118,20 @@ public class Y23Day15 {
 
 	
 	public static void mainPart2(String inputFile) {
+		for (InputData data:new InputProcessor(inputFile)) {
+			System.out.println(data);
+			HASHMAP hm = new HASHMAP(); 
+			for (String word:data.words) {
+				if (word.endsWith("-")) {
+					hm.remove(word.replace("-", ""));
+				}
+				else {
+					String[] key_value = word.split("=");
+					hm.put(key_value[0], Integer.parseInt(key_value[1]));
+				}
+			}
+			System.out.println("CHECKSUM: "+hm.calcChecksum());
+		}		
 	}
 
 
@@ -89,8 +141,8 @@ public class Y23Day15 {
 		mainPart1("exercises/day15/Feri/input.txt");               
 		System.out.println("---------------");                           
 		System.out.println("--- PART II ---");
-		mainPart2("exercises/day15/Feri/input-example.txt");
-//		mainPart2("exercises/day15/Feri/input.txt");              
+//		mainPart2("exercises/day15/Feri/input-example.txt");
+		mainPart2("exercises/day15/Feri/input.txt");              // > 198485
 		System.out.println("---------------");    //
 	}
 	
