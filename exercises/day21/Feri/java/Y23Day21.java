@@ -123,8 +123,10 @@ public class Y23Day21 {
 		Pos startPos;
 		Set<Pos> currentPositions;
 		int ticks;
-		public World() {
+		boolean infinite;
+		public World(boolean infinite) {
 			this.rows = new ArrayList<>();
+			this.infinite = infinite;
 		}
 		public void addRow(String row) {
 			rows.add(row);
@@ -151,8 +153,14 @@ public class Y23Day21 {
 			return get(pos.x, pos.y);
 		}		
 		private char get(int x, int y) {
-			if ((x<0) || (y<0) || (x>=maxX) || (y>=maxY)) {
-				return '?';
+			if (infinite) {
+				x = Math.floorMod(x, maxX);
+				y = Math.floorMod(y, maxY);
+			}
+			else {
+				if ((x<0) || (y<0) || (x>=maxX) || (y>=maxY)) {
+					return '?';
+				}
 			}
 			return field[y][x];
 		}		
@@ -182,36 +190,34 @@ public class Y23Day21 {
 			}
 			return result.toString();
 		}
-		public void show() {
+		public String toString(int size) {
 			StringBuilder result = new StringBuilder();
-			String lastColor = "b0";
-			for (int y=-1; y<=maxY; y++) {
-				for (int x=-1; x<=maxX; x++) {
-					char c = (char) ('0'+get(x, y));
-					String color = "b0";
-//						color = "byellow";
-//						color = "bred";
-					if (!lastColor.equals(color)) {
-						lastColor = color;
-						result.append(output.style(color));
+			for (int y=-maxY*(size-1)+1; y<maxY*size; y++) {
+				for (int x=-maxX*(size-1)+1; x<maxX*size; x++) {
+					char c = get(x,y);
+					if (currentPositions.contains(new Pos(x,y))) {
+						c = 'O';
 					}
 					result.append(c);
 				}
 				result.append("\n");
 			}
-			output.addStep(result.toString());
+			return result.toString();
+		}
+		public void show(int size) {
+			output.addStep("TICKS: "+ticks+"\n"+toString(size));
 		}
 	}
 
 	public static void mainPart1(String inputFile) {
 //		output = new Y23GUIOutput21("2023 day 21 Part I", true);
-		World world = new World();
+		World world = new World(false);
 		for (InputData data:new InputProcessor(inputFile)) {
 //			System.out.println(data);
 			world.addRow(data.row);
 		}
 		world.init();
-		System.out.println(world);
+//		System.out.println(world);
 		for (int i=0; i<64; i++) {
 			world.tick();
 		}
@@ -220,32 +226,101 @@ public class Y23Day21 {
 		System.out.println("#POSITIONS: "+world.currentPositions.size());
 	}
 
-	public static void mainPart2(String inputFile) {
-//		output = new Y23GUIOutput21("2023 day 21 Part I", true);
-		World world = new World();
+	public static void mainPart2(String inputFile, long targetTick) {
+//		output = new Y23GUIOutput21("2023 day 21 Part II", true);
+		World world = new World(true);
 		for (InputData data:new InputProcessor(inputFile)) {
 //			System.out.println(data);
 			world.addRow(data.row);
 		}
 		world.init();
-		System.out.println(world);
-		for (int i=0; i<64; i++) {
+		
+		long iterations = targetTick / world.maxX;
+		long offset = targetTick - iterations*world.maxX;
+		
+		System.out.println("start with offset "+offset+" for target tick "+targetTick+" ("+iterations+" iterations of "+world.maxX+")");
+		for (int i=0; i<offset; i++) {
 			world.tick();
 		}
-		System.out.println("TICK: "+world.ticks);
-		System.out.println(world);
-		System.out.println("#POSITIONS: "+world.currentPositions.size());
+		
+//		System.out.println(world);
+		for (int i=0; i<5*world.maxX; i++) {
+			world.tick();
+		}
+		
+		long y5 = world.currentPositions.size();
+		for (int i=0; i<1*world.maxX; i++) {
+			world.tick();
+		}
+		long y6 = world.currentPositions.size();
+		for (int i=0; i<1*world.maxX; i++) {
+			world.tick();
+		}
+		long y7 = world.currentPositions.size();
+		for (int i=0; i<1*world.maxX; i++) {
+			world.tick();
+		}
+		long y8 = world.currentPositions.size();
+
+		System.out.println();
+		System.out.println("f(x) = a*x^2+b*x+c");
+		System.out.println("f'(x)  = 2*a*x+b");
+		System.out.println("f''(x)  = 2*a");
+		System.out.println("------------------");
+		System.out.println("f(5)="+y5);
+		System.out.println("f(6)="+y6);
+		System.out.println("f(7)="+y7);
+		System.out.println("f(8)="+y8+"      TICK="+world.ticks);
+		
+		long yd6 = y6-y5;
+		long yd7 = y7-y6;
+		long yd8 = y8-y7;
+
+		long ydd7 = yd7-yd6;
+		long ydd8 = yd8-yd7;
+
+		System.out.println();
+		
+		long a = ydd7/2; 
+		long aTest = ydd8/2;
+		System.out.println("a = f''/2 = "+a);
+		if ((a != aTest) || (2*a != ydd7)) {
+			throw new RuntimeException("inconsistent result for a: "+a+" != "+aTest);
+		}
+		
+		long bxc8 = y8 - a*8*8; 
+		long bxc7 = y7 - a*7*7; 
+		long bxc6 = y6 - a*6*6;
+		
+		long b = bxc8-bxc7;
+		long bTest = bxc7-bxc6;
+		System.out.println("b = (f(x)-2*a*x^2) - (f(x+1)-2*a*x^2)  = "+b);
+		if ((b != bTest)) {
+			throw new RuntimeException("inconsistent result for b: "+b+" != "+bTest);
+		}
+		
+		long c = y8-a*8*8-b*8; 
+		long cTest = y7-a*7*7-b*7; 
+		System.out.println("c = (f(x)-2*a*x^2-b*x) - (f(x+1)-2*a*(x+1)^2-b*(x+1)) = "+c);
+		if ((c != cTest)) {
+			throw new RuntimeException("inconsistent result for c: "+c+" != "+cTest);
+		}
+		
+		System.out.println();
+		System.out.println("derived formula: f(x) = "+a+"*x^2+"+b+"*x+"+c);
+		System.out.println("f("+iterations+") = "+(a*iterations*iterations+b*iterations+c));
+
 	}
 
 
 	public static void main(String[] args) throws FileNotFoundException {
 		System.out.println("--- PART I ---");
-//		mainPart1("exercises/day21/Feri/input-example.txt");
-		mainPart1("exercises/day21/Feri/input.txt");               
+		mainPart1("exercises/day21/Feri/input-example.txt");
+//		mainPart1("exercises/day21/Feri/input.txt");               
 		System.out.println("---------------");                           
 		System.out.println("--- PART II ---");
-		mainPart2("exercises/day21/Feri/input-example.txt");
-//		mainPart2("exercises/day21/Feri/input.txt");
+//		mainPart2("exercises/day21/Feri/input-example.txt", 5000);
+		mainPart2("exercises/day21/Feri/input.txt", 26501365);
 		System.out.println("---------------");    
 	}
 	
