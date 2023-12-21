@@ -385,7 +385,9 @@ public class Y23Day21 {
 //		mainPart2gui("exercises/day21/Feri/input-example.txt");
 //		mainPart2gui("exercises/day21/Feri/input.txt");
 //		mainPart2("exercises/day21/Feri/input-example.txt", 5000, 3);
-		mainPart2("exercises/day21/Feri/input.txt", 26501365,0);
+		StopWatch12.run("Day 21 Part II", () -> {
+			mainPart2("exercises/day21/Feri/input.txt", 26501365,0);
+		});
 		System.out.println("---------------");    
 	}
 	
