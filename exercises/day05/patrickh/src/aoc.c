@@ -85,13 +85,19 @@ static void print_step(FILE *str, uint64_t result, char *format, ...) {
 
 static void print(FILE *str, struct data *data, uint64_t result) {
 	if (result) {
-		fprintf(str, "%sresult=%"I64"u\n", STEP_HEADER, result);
+		fprintf(str, "%sresult=%"I64"u\n%s", STEP_HEADER, result, STEP_BODY);
 	} else {
-		fputs(STEP_HEADER, str);
+		fputs(STEP_BODY, str);
 	}
 	if (!do_print && !interactive) {
 		return;
 	}
+	for (int i = 0; i < data->range_len; ++i)
+		printf("%"I64"u-%"I64"u\n", (uint64_t) data->ranges[i].first,
+				(uint64_t) data->ranges[i].last);
+	if (part == 1)
+		for (int i = 0; i < data->id_len; ++i)
+			printf("%"I64"u\n", (uint64_t) data->ids[i]);
 	fputs(interactive ? STEP_FINISHED : RESET, str);
 }
 
@@ -104,13 +110,53 @@ static int is_good(struct data *data, id id) {
 	return 0;
 }
 
+static size_t insert(struct id_range *r, size_t r_len, struct id_range *new) {
+	struct id_range *low = r;
+	struct id_range *high = r + r_len - 1;
+	while (low <= high) {
+		struct id_range *mid = low + (high - low);
+		if (mid->first > new->last)
+			low = mid + 1;
+		else if (mid->last < new->first)
+			high = mid - 1;
+		else {
+			if (mid->first > new->first)
+				mid->first = new->first;
+			if (mid->last < new->last)
+				mid->last = new->last;
+			if (mid > r && mid[-1].first <= mid->last)
+				mid->last = mid[-1].first - 1;
+			if (mid < r + r_len && mid[1].last >= mid->first)
+				mid->first = mid[1].last + 1;
+			return r_len;
+		}
+	}
+	memmove(low + 1, low, (r + r_len - low) * sizeof(struct id_range));
+	low->first = new->first;
+	low->last = new->last;
+	return r_len + 1;
+}
+
 const char* solve(const char *path) {
 	struct data *data = read_data(path);
 	uint64_t result = 0;
-	for (idx ii = 0; ii < data->id_len; ++ii) {
-		if (is_good(data, data->ids[ii])) {
-			result++;
+	print(solution_out, data, result);
+	if (part == 1) {
+		for (idx ii = 0; ii < data->id_len; ++ii) {
+			if (is_good(data, data->ids[ii])) {
+				result++;
+			}
 		}
+	} else {
+		struct id_range *r = malloc(sizeof(struct id_range) * data->range_len);
+		size_t r_len = 0;
+		for (idx i = 0; i < data->range_len; ++i)
+			r_len = insert(r, r_len, data->ranges + i);
+		free(data->ranges);
+		data->ranges = r;
+		data->range_len = data->range_alloc = r_len;
+		for (int i = 0; i < r_len; ++i)
+			result += r[i].last - r[i].first + 1;
 	}
 	print(solution_out, data, result);
 	free(data);
