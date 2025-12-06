@@ -129,13 +129,11 @@ static void recalc_header_footer_sizes() {
 				np = end;
 			text_end(p + 1, np - p - 1, UINT64_MAX, &real_len);
 			++header_display_lines;
-			if (real_len > display_sizes.y)
-				header_display_lines += real_len / display_sizes.y;
+			if (real_len > display_sizes.x)
+				header_display_lines += real_len / display_sizes.x;
 			p = np;
 		}
 	}
-	if (getenv("FORCE_HEAD_LINES"))
-		header_display_lines = atoi(getenv("FORCE_HEAD_LINES"));
 	char *p = memchr(world_data, ETX_C, world_data_size);
 	if (p) {
 		char *eot = memchr(p, EOT_C, world_data + world_data_size - p);
