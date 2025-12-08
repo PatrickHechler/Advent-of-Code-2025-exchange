@@ -1,3 +1,4 @@
+package feri;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -8,11 +9,15 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 
+
 /**
  * see: https://adventofcode.com/2025/day/08
+ *
  */
-public class Y25Day08 {
+public class Y25Day08Animation3D {
 	
+	static Y25GUIOutput3D08 output = null;
+
 	public static record InputData(int x, int y, int z) {}
 
 	private static final String INPUT_RX = "^([0-9]+),([0-9]+),([0-9]+)$";
@@ -57,6 +62,26 @@ public class Y25Day08 {
 			double dz = this.z - other.z;
 			return Math.sqrt(dx*dx + dy*dy + dz*dz);
 		}
+		public Pos3D min(Pos3D other) {
+			if (other == null) {
+				return this;
+			}
+			return new Pos3D(
+				Math.min(this.x, other.x),
+				Math.min(this.y, other.y),
+				Math.min(this.z, other.z)
+			);
+		}
+		public Pos3D max(Pos3D other) {
+			if (other == null) {
+				return this;
+			}
+			return new Pos3D(
+				Math.max(this.x, other.x),
+				Math.max(this.y, other.y),
+				Math.max(this.z, other.z)
+			);
+		}
 	}
 	
 	public static record Connection(double distance, int fromJB, int toJB) {
@@ -69,33 +94,44 @@ public class Y25Day08 {
 	
 	public static class World {
 		List<Pos3D> junctionBoxes;
+		Pos3D minPos;
+		Pos3D maxPos;
 		List<Set<Integer>> circuitList;
+		List<Connection> connections;
 		public World() {
 			junctionBoxes = new ArrayList<>();
 			circuitList = new ArrayList<>();
+			connections = new ArrayList<>();
 		}
 		@Override
 		public String toString() {
 			return junctionBoxes.toString();
 		}
 		public void addJunctionBox(InputData data) {
-			junctionBoxes.add(new Pos3D(data.x(), data.y(), data.z()));
+			Pos3D jb = new Pos3D(data.x(), data.y(), data.z());
+			junctionBoxes.add(jb);
+			minPos = jb.min(minPos);
+			maxPos = jb.max(maxPos);
 		}
 		public void connectCircuits(int shortestConnections) {
-			List<Connection> connections = new ArrayList<>();
+			showWorld("INIT");
+			List<Connection> cons = new ArrayList<>();
+			cons = new ArrayList<>();
 			for (int i=0; i<junctionBoxes.size(); i++) {
 				Pos3D jb1 = junctionBoxes.get(i);
 				for (int j=i+1; j<junctionBoxes.size(); j++) {
 					Pos3D jb2 = junctionBoxes.get(j);
 					double distance = jb1.distanceTo(jb2);
-					connections.add(new Connection(distance, i, j));
+					cons.add(new Connection(distance, i, j));
 				}
 			}
-			connections.sort((c1,c2) -> Double.compare(c1.distance, c2.distance));
+			cons.sort((c1,c2) -> Double.compare(c1.distance, c2.distance));
 			for (int con=0; con<shortestConnections; con++) {
-				Connection connection = connections.get(con);
+				Connection connection = cons.get(con);
 				System.out.println(con + ": "+connection.distance+"|"+junctionBoxes.get(connection.fromJB)+"->"+junctionBoxes.get(connection.toJB));
 				addCircuitSets(connection.fromJB, connection.toJB);
+				connections.add(connection);
+				showWorld("add connection "+con);
 			}
 			List<Integer> circuitSizes = new ArrayList<>();
 			for (int cir=0; cir<circuitList.size(); cir++) {
@@ -177,10 +213,43 @@ public class Y25Day08 {
 			}
 			return -1;
 		}
+		public void showWorld(String info) {
+			double scale = maxPos.distanceTo(minPos) / 100.0;
+			int type = 1;
+			List<Y25GUIOutput3D08.DDDObject> points = new ArrayList<>();
+			for (int i=0; i<junctionBoxes.size(); i++) {
+				Pos3D jb = junctionBoxes.get(i);
+				int boxType = 10+type;
+				double boxSize = 2.0*scale;
+				Y25GUIOutput3D08.DDDObject point = new Y25GUIOutput3D08.DDDObject("jb"+i, jb.x, jb.y, jb.z, boxSize, boxType);
+				points.add(point);
+			}
+			for (int con=0; con<connections.size(); con++) {
+				Connection connection = connections.get(con);
+				Pos3D jb1 = junctionBoxes.get(connection.fromJB);
+				Pos3D jb2 = junctionBoxes.get(connection.toJB);
+				double x1 = jb1.x;
+				double y1 = jb1.y;
+				double z1 = jb1.z;
+				double x2 = jb2.x;
+				double y2 = jb2.y;
+				double z2 = jb2.z;
+				
+				int lineType = 30+type+2;
+				double lineSize = 1.0*scale;
+				Y25GUIOutput3D08.DDDObject line = new Y25GUIOutput3D08.DDDLineObject("con"+con, x1, y1, z1, x2, y2, z2, lineSize, lineType);
+				points.add(line);
+			}
+			if (output.scale == 1) {
+				output.adjustScale(points);
+			}
+			output.addStep(info, points);
+		}
 	}
 
 	
 	public static void mainPart1(String inputFile, int numConnections) throws FileNotFoundException {
+		output = new Y25GUIOutput3D08("2025 Day 8 Part I", true);
 		World world = new World();
 		for (InputData data:new InputProcessor(inputFile)) {
 			world.addJunctionBox(data);
@@ -191,6 +260,7 @@ public class Y25Day08 {
 
 
 	public static void mainPart2(String inputFile) {
+		output = new Y25GUIOutput3D08("2025 Day 8 Part II", true);
 		World world = new World();
 		for (InputData data:new InputProcessor(inputFile)) {
 			world.addJunctionBox(data);
@@ -202,13 +272,13 @@ public class Y25Day08 {
 
 	public static void main(String[] args) throws FileNotFoundException {
 		System.out.println("--- PART I ---");
-//		mainPart1("exercises/day08/Feri/input-example.txt", 10);
-		mainPart1("exercises/day08/Feri/input.txt", 1000);   // not 1472
+		mainPart1("../../../../exercises/day08/Feri/input-example.txt", 10);
+//		mainPart1("../../../../exercises/day08/Feri/input.txt", 1000);   // not 1472
 		System.out.println("---------------");
 		System.out.println("--- PART II ---");
 //		mainPart2("exercises/day08/Feri/input-example.txt", 10);
-		mainPart2("exercises/day08/Feri/input.txt");    // not 25272
+//		mainPart2("exercises/day08/Feri/input.txt");    // not 25272
 		System.out.println("---------------");    // 
 	}
-	
+
 }
